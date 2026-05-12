@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Zimmet Logları{% endblock %}
+{% block nav_logs %}active{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-800">Zimmet Logları</h1>
+        <p class="text-sm text-slate-500 mt-1">Tüm zimmet hareketlerinin değiştirilemez denetim kaydı</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 mb-6">
+        <div class="flex flex-wrap items-center gap-3">
+            <select id="filter-islem-turu" class="px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                <option value="">Tüm İşlemler</option>
+                <option value="ATAMA">Zimmet Atama</option>
+                <option value="IADE">Zimmet İade</option>
+                <option value="DURUM_DEGISIKLIGI">Durum Değişikliği</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div id="logs-container" class="space-y-3">
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm px-6 py-12 text-center text-slate-400">
+            <i data-lucide="loader-2" class="w-5 h-5 mx-auto mb-2 animate-spin text-slate-300"></i>
+            Yükleniyor...
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between mt-4">
+        <p id="logs-info" class="text-xs text-slate-400"></p>
+        <div class="flex gap-1" id="logs-pagination"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (!requireAuth()) return;
+        await loadUserInfo();
+        loadLogs();
+
+        document.getElementById('filter-islem-turu').addEventListener('change', loadLogs);
+    });
+
+    async function loadLogs(page = 1) {
+        const islemTuru = document.getElementById('filter-islem-turu').value;
+        let url = `/api/logs/?page=${typeof page === 'number' ? page : 1}&ordering=-islem_tarihi`;
+        if (islemTuru) url += `&islem_turu=${islemTuru}`;
+
+        const resp = await api(url);
+        if (!resp?.ok) {
+            document.getElementById('logs-container').innerHTML = '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm px-6 py-12 text-center text-slate-400">Logları görüntüleme yetkiniz yok.</div>';
+            return;
+        }
+        const data = await resp.json();
+        renderLogs(data.results || []);
+
+        document.getElementById('logs-info').textContent = `Toplam ${data.count || 0} kayıt`;
+        let pagBtns = '';
+        if (data.previous) pagBtns += `<button onclick="loadLogs(${getPageNum(data, 'prev')})" class="px-3 py-1 rounded-lg border border-slate-200 text-xs hover:bg-slate-50 transition-colors">← Önceki</button>`;
+        if (data.next) pagBtns += `<button onclick="loadLogs(${getPageNum(data, 'next')})" class="px-3 py-1 rounded-lg border border-slate-200 text-xs hover:bg-slate-50 transition-colors">Sonraki →</button>`;
+        document.getElementById('logs-pagination').innerHTML = pagBtns;
+    }
+
+    function getPageNum(data, dir) {
+        const url = dir === 'prev' ? data.previous : data.next;
+        if (!url) return 1;
+        const u = new URL(url, window.location.origin);
+        return parseInt(u.searchParams.get('page') || '1');
+    }
+
+    function renderLogs(logs) {
+        const container = document.getElementById('logs-container');
+        if (!logs.length) {
+            container.innerHTML = '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm px-6 py-12 text-center text-slate-400">Henüz zimmet kaydı yok.</div>';
+            return;
+        }
+
+        const icons = { 'ATAMA': 'user-plus', 'IADE': 'user-minus', 'DURUM_DEGISIKLIGI': 'refresh-cw' };
+        const iconBg = { 'ATAMA': 'bg-emerald-100 text-emerald-600', 'IADE': 'bg-sky-100 text-sky-600', 'DURUM_DEGISIKLIGI': 'bg-amber-100 text-amber-600' };
+        const borderColor = { 'ATAMA': 'border-l-emerald-400', 'IADE': 'border-l-sky-400', 'DURUM_DEGISIKLIGI': 'border-l-amber-400' };
+
+        container.innerHTML = logs.map(l => `
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border-l-4 ${borderColor[l.islem_turu] || 'border-l-slate-300'} slide-up">
+                <div class="px-6 py-4 flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-xl ${iconBg[l.islem_turu] || 'bg-slate-100 text-slate-500'} flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="${icons[l.islem_turu] || 'activity'}" class="w-5 h-5"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm font-semibold text-slate-800">${l.islem_turu_display}</span>
+                            <span class="text-xs text-slate-400">·</span>
+                            <span class="text-xs text-slate-400">${new Date(l.islem_tarihi).toLocaleString('tr-TR')}</span>
+                        </div>
+
+                        <div class="text-sm text-slate-600 space-y-0.5">
+                            ${l.donanim_bilgi ? `<p><span class="text-slate-400">Donanım:</span> ${l.donanim_bilgi}</p>` : ''}
+                            ${l.eski_kullanici_ad ? `<p><span class="text-slate-400">Eski:</span> ${l.eski_kullanici_ad}</p>` : ''}
+                            ${l.yeni_kullanici_ad ? `<p><span class="text-slate-400">Yeni:</span> ${l.yeni_kullanici_ad}</p>` : ''}
+                            ${l.aciklama ? `<p class="text-xs text-slate-400 italic mt-1">"${l.aciklama}"</p>` : ''}
+                        </div>
+
+                        <p class="text-xs text-slate-400 mt-2">
+                            <i data-lucide="user-check" class="w-3 h-3 inline mr-1"></i>İşlemi yapan: <span class="font-medium text-slate-500">${l.islem_yapan_ad}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        lucide.createIcons();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-800">Dashboard</h1>
+        <p class="text-sm text-slate-500 mt-1">Sisteme genel bakış ve anlık metrikler</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="stats-grid">
+        <!-- Card skeletons will be replaced by JS -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm animate-pulse">
+            <div class="h-4 bg-slate-200 rounded w-24 mb-3"></div>
+            <div class="h-8 bg-slate-200 rounded w-16"></div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm animate-pulse">
+            <div class="h-4 bg-slate-200 rounded w-24 mb-3"></div>
+            <div class="h-8 bg-slate-200 rounded w-16"></div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm animate-pulse">
+            <div class="h-4 bg-slate-200 rounded w-24 mb-3"></div>
+            <div class="h-8 bg-slate-200 rounded w-16"></div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm animate-pulse">
+            <div class="h-4 bg-slate-200 rounded w-24 mb-3"></div>
+            <div class="h-8 bg-slate-200 rounded w-16"></div>
+        </div>
+    </div>
+
+    <!-- Two-Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Recent Tickets -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden slide-up">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <i data-lucide="ticket" class="w-4 h-4 text-amber-600"></i>
+                    </div>
+                    <h2 class="text-sm font-semibold text-slate-700">Son Destek Talepleri</h2>
+                </div>
+                <a href="/tickets/" class="text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors">Tümünü Gör →</a>
+            </div>
+            <div id="recent-tickets" class="divide-y divide-slate-100">
+                <div class="px-6 py-8 text-center text-sm text-slate-400">
+                    <i data-lucide="loader-2" class="w-5 h-5 mx-auto mb-2 animate-spin text-slate-300"></i>
+                    Yükleniyor...
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Logs -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden slide-up" style="animation-delay: .1s;">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
+                        <i data-lucide="scroll-text" class="w-4 h-4 text-brand-600"></i>
+                    </div>
+                    <h2 class="text-sm font-semibold text-slate-700">Son Zimmet Hareketleri</h2>
+                </div>
+                <a href="/logs/" class="text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors">Tümünü Gör →</a>
+            </div>
+            <div id="recent-logs" class="divide-y divide-slate-100">
+                <div class="px-6 py-8 text-center text-sm text-slate-400">
+                    <i data-lucide="loader-2" class="w-5 h-5 mx-auto mb-2 animate-spin text-slate-300"></i>
+                    Yükleniyor...
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (!requireAuth()) return;
+        await loadUserInfo();
+        loadDashboard();
+    });
+
+    async function loadDashboard() {
+        // Fetch data in parallel
+        const [ticketsResp, inventoryResp, logsResp] = await Promise.all([
+            api('/api/tickets/?page_size=5&ordering=-olusturma_tarihi'),
+            api('/api/inventory/'),
+            api('/api/logs/?page_size=5&ordering=-islem_tarihi'),
+        ]);
+
+        // ── Stats ──
+        const tickets = ticketsResp?.ok ? await ticketsResp.json() : { results: [], count: 0 };
+        const inventory = inventoryResp?.ok ? await inventoryResp.json() : { results: [], count: 0 };
+        const logs = logsResp?.ok ? await logsResp.json() : { results: [], count: 0 };
+
+        const ticketResults = tickets.results || [];
+        const inventoryResults = inventory.results || [];
+
+        const openTickets = ticketResults.filter(t => t.durum !== 'KAPATILDI').length;
+        const totalInventory = inventory.count || 0;
+        const availableDevices = inventoryResults.filter(d => d.durum === 'DEPODA').length;
+        const faultyDevices = inventoryResults.filter(d => d.durum === 'ARIZALI').length;
+
+        renderStats(tickets.count || 0, openTickets, totalInventory, availableDevices, faultyDevices);
+        renderRecentTickets(ticketResults.slice(0, 5));
+        renderRecentLogs((logs.results || []).slice(0, 5));
+    }
+
+    function renderStats(totalTickets, openTickets, totalInventory, available, faulty) {
+        const grid = document.getElementById('stats-grid');
+        grid.innerHTML = `
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Toplam Bilet</p>
+                    <div class="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
+                        <i data-lucide="ticket" class="w-4 h-4 text-brand-600"></i>
+                    </div>
+                </div>
+                <p class="text-3xl font-extrabold text-slate-800">${totalTickets}</p>
+                <p class="text-xs text-slate-400 mt-1">${openTickets} açık talep</p>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.05s">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Envanter</p>
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <i data-lucide="monitor" class="w-4 h-4 text-emerald-600"></i>
+                    </div>
+                </div>
+                <p class="text-3xl font-extrabold text-slate-800">${totalInventory}</p>
+                <p class="text-xs text-slate-400 mt-1">${available} depoda</p>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.1s">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-semibold text-amber-500 uppercase tracking-wider">Açık Talepler</p>
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i>
+                    </div>
+                </div>
+                <p class="text-3xl font-extrabold text-amber-600">${openTickets}</p>
+                <p class="text-xs text-slate-400 mt-1">çözüm bekliyor</p>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.15s">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-semibold text-red-500 uppercase tracking-wider">Arızalı</p>
+                    <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600"></i>
+                    </div>
+                </div>
+                <p class="text-3xl font-extrabold text-red-600">${faulty}</p>
+                <p class="text-xs text-slate-400 mt-1">cihaz arızalı</p>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    function renderRecentTickets(tickets) {
+        const container = document.getElementById('recent-tickets');
+        if (!tickets.length) {
+            container.innerHTML = '<div class="px-6 py-8 text-center text-sm text-slate-400">Henüz destek talebi yok.</div>';
+            return;
+        }
+
+        container.innerHTML = tickets.map(t => `
+            <div class="px-6 py-3.5 hover:bg-slate-50/80 transition-colors cursor-pointer flex items-center gap-4">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-700 truncate">${t.baslik}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">${t.olusturan_ad} · ${new Date(t.olusturma_tarihi).toLocaleDateString('tr-TR')}</p>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    ${statusBadge(t.aciliyet, 'aciliyet')}
+                    ${statusBadge(t.durum, 'ticket')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderRecentLogs(logs) {
+        const container = document.getElementById('recent-logs');
+        if (!logs.length) {
+            container.innerHTML = '<div class="px-6 py-8 text-center text-sm text-slate-400">Henüz zimmet kaydı yok.</div>';
+            return;
+        }
+
+        const icons = { 'ATAMA': 'user-plus', 'IADE': 'user-minus', 'DURUM_DEGISIKLIGI': 'refresh-cw' };
+        const colors = { 'ATAMA': 'text-emerald-600 bg-emerald-100', 'IADE': 'text-sky-600 bg-sky-100', 'DURUM_DEGISIKLIGI': 'text-amber-600 bg-amber-100' };
+
+        container.innerHTML = logs.map(l => `
+            <div class="px-6 py-3.5 hover:bg-slate-50/80 transition-colors flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg ${colors[l.islem_turu] || 'bg-slate-100 text-slate-500'} flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="${icons[l.islem_turu] || 'activity'}" class="w-4 h-4"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-700 truncate">${l.islem_turu_display}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">${l.islem_yapan_ad} · ${new Date(l.islem_tarihi).toLocaleDateString('tr-TR')}</p>
+                </div>
+            </div>
+        `).join('');
+        lucide.createIcons();
+    }
+</script>
+{% endblock %}

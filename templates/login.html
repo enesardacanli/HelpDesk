@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="tr" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IT Destek ve Envanter Yönetim Sistemi — Giriş Yapın">
+    <title>Giriş Yap | IT Destek Sistemi</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
+                            400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+                            800: '#3730a3', 900: '#312e81', 950: '#1e1b4b',
+                        }
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        .login-gradient {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4338ca 60%, #6366f1 100%);
+        }
+        .glass-card {
+            background: rgba(255,255,255,.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,.12);
+        }
+        .input-glow:focus {
+            box-shadow: 0 0 0 3px rgba(99,102,241,.3);
+        }
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+        .fade-in { animation: fadeIn .6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+
+<body class="h-full font-sans antialiased">
+    <div class="min-h-full flex login-gradient relative overflow-hidden">
+
+        <!-- Background Decorative Elements -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute -top-40 -right-40 w-96 h-96 bg-brand-400/10 rounded-full blur-3xl float-animation"></div>
+            <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-brand-300/10 rounded-full blur-3xl float-animation" style="animation-delay: -3s;"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-500/5 rounded-full blur-3xl"></div>
+        </div>
+
+        <!-- Left Panel: Branding -->
+        <div class="hidden lg:flex flex-1 flex-col justify-center items-center p-12 relative z-10">
+            <div class="max-w-md text-center fade-in">
+                <div class="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-lg flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-brand-500/20 border border-white/10">
+                    <i data-lucide="headset" class="w-10 h-10 text-white"></i>
+                </div>
+                <h1 class="text-4xl font-extrabold text-white mb-4 tracking-tight">
+                    IT Destek & Envanter
+                </h1>
+                <p class="text-brand-200 text-lg leading-relaxed">
+                    Kurumsal BT altyapınızı tek bir platformdan yönetin.
+                    Donanım takibi, destek talepleri ve zimmet kontrolü — hepsi bir arada.
+                </p>
+
+                <div class="mt-12 grid grid-cols-3 gap-4">
+                    <div class="glass-card rounded-xl p-4 text-center">
+                        <i data-lucide="monitor" class="w-6 h-6 text-brand-300 mx-auto mb-2"></i>
+                        <p class="text-xs text-brand-200 font-medium">Envanter</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-4 text-center">
+                        <i data-lucide="ticket" class="w-6 h-6 text-brand-300 mx-auto mb-2"></i>
+                        <p class="text-xs text-brand-200 font-medium">Helpdesk</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-4 text-center">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-brand-300 mx-auto mb-2"></i>
+                        <p class="text-xs text-brand-200 font-medium">Zimmet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Login Form -->
+        <div class="w-full lg:w-[480px] flex items-center justify-center p-6 sm:p-12 relative z-10">
+            <div class="w-full max-w-sm fade-in" style="animation-delay: .15s;">
+
+                <!-- Mobile Logo -->
+                <div class="lg:hidden text-center mb-8">
+                    <div class="w-14 h-14 rounded-xl bg-white/10 backdrop-blur-lg flex items-center justify-center mx-auto mb-4 border border-white/10">
+                        <i data-lucide="headset" class="w-7 h-7 text-white"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-white">HelpDesk</h1>
+                </div>
+
+                <!-- Form Card -->
+                <div class="bg-white rounded-2xl shadow-2xl shadow-black/20 p-8">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800">Giriş Yap</h2>
+                        <p class="text-sm text-slate-500 mt-1">Devam etmek için hesabınızla giriş yapın</p>
+                    </div>
+
+                    <!-- Error Alert -->
+                    <div id="login-error" class="hidden mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm flex items-center gap-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
+                        <span id="login-error-text">Hata oluştu.</span>
+                    </div>
+
+                    <form id="login-form" class="space-y-5" onsubmit="handleLogin(event)">
+                        <!-- Email -->
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">E-posta</label>
+                            <div class="relative">
+                                <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    required
+                                    autofocus
+                                    placeholder="ornek@sirket.com"
+                                    class="input-glow w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-brand-500 transition-all placeholder:text-slate-400"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Şifre</label>
+                            <div class="relative">
+                                <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    required
+                                    placeholder="••••••••"
+                                    class="input-glow w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-brand-500 transition-all placeholder:text-slate-400"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <button
+                            type="submit"
+                            id="login-btn"
+                            class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white text-sm font-semibold shadow-lg shadow-brand-500/25 hover:shadow-xl hover:shadow-brand-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center gap-2"
+                        >
+                            <span id="login-btn-text">Giriş Yap</span>
+                            <svg id="login-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+                <p class="text-center text-xs text-brand-300/60 mt-6">&copy; 2026 IT Destek Sistemi</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Redirect if already logged in
+        if (localStorage.getItem('helpdesk_access')) {
+            window.location.href = '/';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('login-error');
+            const errorText = document.getElementById('login-error-text');
+            const btn = document.getElementById('login-btn');
+            const btnText = document.getElementById('login-btn-text');
+            const spinner = document.getElementById('login-spinner');
+
+            errorDiv.classList.add('hidden');
+            btn.disabled = true;
+            btnText.textContent = 'Giriş yapılıyor...';
+            spinner.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/auth/token/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('helpdesk_access', data.access);
+                    localStorage.setItem('helpdesk_refresh', data.refresh);
+                    window.location.href = '/';
+                } else {
+                    const errData = await response.json().catch(() => ({}));
+                    errorText.textContent = errData.detail || 'E-posta veya şifre hatalı.';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorText.textContent = 'Sunucuya bağlanılamadı.';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Giriş Yap';
+                spinner.classList.add('hidden');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+    </script>
+</body>
+</html>

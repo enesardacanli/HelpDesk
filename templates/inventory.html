@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}Envanter{% endblock %}
+{% block nav_inventory %}active{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Envanter Yönetimi</h1>
+            <p class="text-sm text-slate-500 mt-1">Donanım listesi, zimmetleme ve durum takibi</p>
+        </div>
+        <button onclick="openAddModal()" id="btn-add-device" class="hidden inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white text-sm font-semibold shadow-lg shadow-brand-500/25 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Yeni Donanım
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 mb-6">
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex-1 min-w-[200px]">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <input type="text" id="search-input" placeholder="Seri no, marka veya model ara..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+            </div>
+            <select id="filter-durum" class="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 bg-white">
+                <option value="">Tüm Durumlar</option>
+                <option value="DEPODA">Depoda</option>
+                <option value="KULLANIMDA">Kullanımda</option>
+                <option value="ARIZALI">Arızalı</option>
+                <option value="HURDA">Hurda</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50/80 border-b border-slate-200">
+                        <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Seri No</th>
+                        <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Marka / Model</th>
+                        <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Kategori</th>
+                        <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Durum</th>
+                        <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Zimmetli</th>
+                        <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-table" class="divide-y divide-slate-100">
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                            <i data-lucide="loader-2" class="w-5 h-5 mx-auto mb-2 animate-spin text-slate-300"></i>
+                            Yükleniyor...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination -->
+        <div class="flex items-center justify-between px-6 py-3 border-t border-slate-100">
+            <p id="inventory-info" class="text-xs text-slate-400"></p>
+            <div class="flex gap-1" id="inventory-pagination"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ======== ADD / EDIT MODAL ======== -->
+<div id="add-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 slide-up">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 id="add-modal-title" class="text-lg font-semibold text-slate-800">Yeni Donanım Ekle</h3>
+            <button onclick="closeAddModal()" class="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+            </button>
+        </div>
+        <form id="add-form" onsubmit="handleAddDevice(event)" class="p-6 space-y-4">
+            <input type="hidden" id="edit-device-id">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Seri No</label>
+                <input type="text" id="add-seri-no" required class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Marka</label>
+                    <input type="text" id="add-marka" required class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Model</label>
+                    <input type="text" id="add-model" required class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Kategori</label>
+                <input type="text" id="add-kategori" required placeholder="Ör: Laptop, Monitör, Yazıcı" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">İptal</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ======== ASSIGN MODAL ======== -->
+<div id="assign-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 slide-up">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">Donanım Zimmetle</h3>
+            <button onclick="closeAssignModal()" class="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+            </button>
+        </div>
+        <form id="assign-form" onsubmit="handleAssign(event)" class="p-6 space-y-4">
+            <input type="hidden" id="assign-device-id">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Kullanıcı Seç</label>
+                <select id="assign-user-select" required class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 bg-white">
+                    <option value="">Yükleniyor...</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Açıklama</label>
+                <textarea id="assign-aciklama" rows="2" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" placeholder="İsteğe bağlı not..."></textarea>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeAssignModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">İptal</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm">Zimmetle</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentUser = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (!requireAuth()) return;
+        currentUser = await loadUserInfo();
+        if (currentUser && ['ADMIN', 'IT_UZMANI'].includes(currentUser.rol)) {
+            document.getElementById('btn-add-device').classList.remove('hidden');
+        }
+        loadInventory();
+
+        document.getElementById('search-input').addEventListener('input', debounce(loadInventory, 300));
+        document.getElementById('filter-durum').addEventListener('change', loadInventory);
+    });
+
+    async function loadInventory(page = 1) {
+        const search = document.getElementById('search-input').value;
+        const durum = document.getElementById('filter-durum').value;
+        let url = `/api/inventory/?page=${typeof page === 'number' ? page : 1}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (durum) url += `&durum=${durum}`;
+
+        const resp = await api(url);
+        if (!resp?.ok) return;
+
+        const data = await resp.json();
+        renderTable(data.results || []);
+        renderPagination(data);
+    }
+
+    function renderTable(items) {
+        const tbody = document.getElementById('inventory-table');
+        const isStaff = currentUser && ['ADMIN', 'IT_UZMANI'].includes(currentUser.rol);
+
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">Kayıt bulunamadı.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = items.map(d => `
+            <tr class="hover:bg-slate-50/80 transition-colors">
+                <td class="px-6 py-3.5 font-mono text-xs text-slate-600">${d.seri_no}</td>
+                <td class="px-6 py-3.5">
+                    <p class="font-medium text-slate-700">${d.marka}</p>
+                    <p class="text-xs text-slate-400">${d.model_adi}</p>
+                </td>
+                <td class="px-6 py-3.5 text-slate-600">${d.kategori}</td>
+                <td class="px-6 py-3.5">${statusBadge(d.durum, 'donanim')}</td>
+                <td class="px-6 py-3.5 text-slate-600">${d.zimmetli_kullanici_ad || '<span class="text-slate-300">—</span>'}</td>
+                <td class="px-6 py-3.5 text-right">
+                    ${isStaff ? renderActions(d) : ''}
+                </td>
+            </tr>
+        `).join('');
+        lucide.createIcons();
+    }
+
+    function renderActions(device) {
+        let actions = '';
+        if (device.durum === 'DEPODA') {
+            actions += `<button onclick="openAssignModal(${device.id})" class="p-1.5 rounded-lg hover:bg-emerald-100 text-emerald-600 transition-colors" title="Zimmetle"><i data-lucide="user-plus" class="w-4 h-4"></i></button>`;
+        }
+        if (device.durum === 'KULLANIMDA') {
+            actions += `<button onclick="returnDevice(${device.id})" class="p-1.5 rounded-lg hover:bg-sky-100 text-sky-600 transition-colors" title="İade Al"><i data-lucide="user-minus" class="w-4 h-4"></i></button>`;
+        }
+        if (device.durum === 'DEPODA') {
+            actions += `<button onclick="updateStatus(${device.id}, 'ARIZALI')" class="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors" title="Arızalı"><i data-lucide="alert-triangle" class="w-4 h-4"></i></button>`;
+        }
+        if (device.durum === 'ARIZALI') {
+            actions += `<button onclick="updateStatus(${device.id}, 'DEPODA')" class="p-1.5 rounded-lg hover:bg-emerald-100 text-emerald-600 transition-colors" title="Tamire Gönder"><i data-lucide="wrench" class="w-4 h-4"></i></button>`;
+            actions += `<button onclick="updateStatus(${device.id}, 'HURDA')" class="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 transition-colors" title="Hurda"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+        }
+        return `<div class="flex items-center justify-end gap-1">${actions}</div>`;
+    }
+
+    function renderPagination(data) {
+        const info = document.getElementById('inventory-info');
+        const pag = document.getElementById('inventory-pagination');
+        info.textContent = `Toplam ${data.count || 0} kayıt`;
+
+        let buttons = '';
+        if (data.previous) buttons += `<button onclick="loadInventory(${getCurrentPage(data) - 1})" class="px-3 py-1 rounded-lg border border-slate-200 text-xs hover:bg-slate-50 transition-colors">← Önceki</button>`;
+        if (data.next) buttons += `<button onclick="loadInventory(${getCurrentPage(data) + 1})" class="px-3 py-1 rounded-lg border border-slate-200 text-xs hover:bg-slate-50 transition-colors">Sonraki →</button>`;
+        pag.innerHTML = buttons;
+    }
+
+    function getCurrentPage(data) {
+        if (!data.previous && !data.next) return 1;
+        if (!data.previous) return 1;
+        const url = new URL(data.previous, window.location.origin);
+        return parseInt(url.searchParams.get('page') || '1') + 1;
+    }
+
+    // ── Add / Edit ──
+    function openAddModal() {
+        document.getElementById('add-modal-title').textContent = 'Yeni Donanım Ekle';
+        document.getElementById('add-form').reset();
+        document.getElementById('edit-device-id').value = '';
+        document.getElementById('add-modal').classList.remove('hidden');
+    }
+
+    function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+    async function handleAddDevice(e) {
+        e.preventDefault();
+        const body = {
+            seri_no: document.getElementById('add-seri-no').value,
+            marka: document.getElementById('add-marka').value,
+            model_adi: document.getElementById('add-model').value,
+            kategori: document.getElementById('add-kategori').value,
+        };
+        const editId = document.getElementById('edit-device-id').value;
+        const method = editId ? 'PUT' : 'POST';
+        const url = editId ? `/api/inventory/${editId}/` : '/api/inventory/';
+
+        const resp = await api(url, { method, body: JSON.stringify(body) });
+        if (resp?.ok) {
+            showToast(editId ? 'Donanım güncellendi.' : 'Donanım eklendi.', 'success');
+            closeAddModal();
+            loadInventory();
+        } else {
+            const err = await resp?.json().catch(() => ({}));
+            showToast(Object.values(err).flat().join(' ') || 'Hata oluştu.', 'error');
+        }
+    }
+
+    // ── Assign ──
+    async function openAssignModal(deviceId) {
+        document.getElementById('assign-device-id').value = deviceId;
+        document.getElementById('assign-modal').classList.remove('hidden');
+
+        const resp = await api('/api/kullanicilar/');
+        if (resp?.ok) {
+            const data = await resp.json();
+            const select = document.getElementById('assign-user-select');
+            select.innerHTML = '<option value="">Kullanıcı seçin...</option>' +
+                (data.results || []).map(u => `<option value="${u.id}">${u.ad} ${u.soyad} (${u.email})</option>`).join('');
+        }
+    }
+
+    function closeAssignModal() { document.getElementById('assign-modal').classList.add('hidden'); }
+
+    async function handleAssign(e) {
+        e.preventDefault();
+        const deviceId = document.getElementById('assign-device-id').value;
+        const body = {
+            kullanici_id: parseInt(document.getElementById('assign-user-select').value),
+            aciklama: document.getElementById('assign-aciklama').value,
+        };
+
+        const resp = await api(`/api/inventory/${deviceId}/assign/`, {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+
+        if (resp?.ok) {
+            showToast('Donanım başarıyla zimmetlendi.', 'success');
+            closeAssignModal();
+            loadInventory();
+        } else {
+            const err = await resp?.json().catch(() => ({}));
+            showToast(err.detail || 'Zimmetleme başarısız.', 'error');
+        }
+    }
+
+    // ── Return ──
+    async function returnDevice(deviceId) {
+        if (!confirm('Bu donanımı iade almak istediğinize emin misiniz?')) return;
+        const resp = await api(`/api/inventory/${deviceId}/return/`, { method: 'POST', body: '{}' });
+        if (resp?.ok) {
+            showToast('Donanım iade alındı.', 'success');
+            loadInventory();
+        } else {
+            const err = await resp?.json().catch(() => ({}));
+            showToast(err.detail || 'İade başarısız.', 'error');
+        }
+    }
+
+    // ── Status Update ──
+    async function updateStatus(deviceId, newStatus) {
+        const labels = { ARIZALI: 'arızalı', DEPODA: 'depoya iade', HURDA: 'hurda' };
+        if (!confirm(`Durumu "${labels[newStatus]}" olarak değiştirmek istiyor musunuz?`)) return;
+
+        const resp = await api(`/api/inventory/${deviceId}/durum/`, {
+            method: 'PATCH',
+            body: JSON.stringify({ yeni_durum: newStatus }),
+        });
+
+        if (resp?.ok) {
+            showToast('Durum güncellendi.', 'success');
+            loadInventory();
+        } else {
+            const err = await resp?.json().catch(() => ({}));
+            showToast(err.yeni_durum?.[0] || err.detail || 'Güncelleme başarısız.', 'error');
+        }
+    }
+
+    // ── Debounce Utility ──
+    function debounce(fn, delay) {
+        let timer;
+        return function (...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+</script>
+{% endblock %}
