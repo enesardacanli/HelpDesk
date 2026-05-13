@@ -13,6 +13,11 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
@@ -298,22 +303,51 @@ class DonanimViewSet(viewsets.ModelViewSet):
     # ------------------------------------------------------------------
 
     @action(detail=False, methods=['get'], url_path='export')
-    def export_csv(self, request):
-        """Envanter verilerini CSV olarak disari aktarir."""
+    def export_pdf(self, request):
+        """Envanter verilerini PDF olarak disari aktarir."""
         if request.user.rol not in (Rol.ADMIN, Rol.IT_UZMANI):
             return Response({'detail': 'Yetki yok.'}, status=status.HTTP_403_FORBIDDEN)
 
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="envanter.csv"'
-        writer = csv.writer(response)
-        writer.writerow(['ID', 'Seri No', 'Marka', 'Model', 'Kategori', 'Durum', 'Garanti Bitis', 'Zimmetli'])
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="envanter.pdf"'
+
+        doc = SimpleDocTemplate(response, pagesize=landscape(letter))
+        elements = []
+        
+        styles = getSampleStyleSheet()
+        elements.append(Paragraph("Envanter Listesi", styles['Title']))
+
+        data = [['ID', 'Seri No', 'Marka', 'Model', 'Kategori', 'Durum', 'Garanti Bitis', 'Zimmetli']]
         for d in self.get_queryset():
-            writer.writerow([
-                d.id, d.seri_no, d.marka, d.model_adi, d.kategori,
+            data.append([
+                str(d.id), 
+                d.seri_no, 
+                d.marka, 
+                d.model_adi, 
+                d.kategori,
                 d.get_durum_display(),
-                d.garanti_bitis_tarihi.strftime('%d.%m.%Y') if d.garanti_bitis_tarihi else '',
-                d.zimmetli_kullanici.tam_ad if d.zimmetli_kullanici else '',
+                d.garanti_bitis_tarihi.strftime('%d.%m.%Y') if d.garanti_bitis_tarihi else '-',
+                d.zimmetli_kullanici.tam_ad if d.zimmetli_kullanici else '-'
             ])
+
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        elements.append(table)
+        doc.build(elements)
+        
         return response
 
 
