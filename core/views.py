@@ -725,9 +725,7 @@ class DashboardStatsView(APIView):
         from core.serializers import DestekTalebiSerializer
         # Biletlerin SLA durumunu computed olarak hesapla
         for t in recent_tickets:
-            # Serializer method'unu dogrudan cagirarak yeniden kullanim
-            serializer = DestekTalebiSerializer()
-            serializer.context = {} # Context gereksinimi yok
+            serializer = DestekTalebiSerializer(context={})
             durum = serializer.get_sla_durumu(t)
             if durum in sla_stats:
                 sla_stats[durum] += 1
