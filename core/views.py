@@ -727,8 +727,12 @@ class DashboardStatsView(APIView):
         for t in recent_tickets:
             serializer = DestekTalebiSerializer(context={})
             durum = serializer.get_sla_durumu(t)
-            if durum in sla_stats:
-                sla_stats[durum] += 1
+            if durum == 'Normal':
+                sla_stats['normal'] += 1
+            elif durum == 'Uyari':
+                sla_stats['warning'] += 1
+            elif durum == 'Ihlal':
+                sla_stats['violation'] += 1
 
         return Response({
             'stats': {
