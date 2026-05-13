@@ -13,6 +13,7 @@ from rest_framework_simplejwt.views import (
 )
 
 from core.frontend_views import (
+    ActivityView,
     DashboardView,
     InventoryView,
     LoginView,
@@ -39,4 +40,5 @@ urlpatterns = [
     path('inventory/', InventoryView.as_view(), name='inventory'),
     path('tickets/', TicketsView.as_view(), name='tickets'),
     path('logs/', LogsView.as_view(), name='logs'),
+    path('activity/', ActivityView.as_view(), name='activity'),
 ]

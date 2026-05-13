@@ -513,3 +513,54 @@ class ZimmetLogViewSet(
 
     def get_permissions(self):
         return [IsAuthenticated()]
+
+
+# ==========================================================================
+# AKTİVİTE GEÇMİŞİ
+# ==========================================================================
+
+
+class ActivityTimelineView(viewsets.ViewSet):
+    """Kullanıcının tüm aktivitelerini kronolojik timeline olarak döndürür."""
+
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        user = request.user
+        events = []
+
+        # Bilet oluşturma
+        for t in DestekTalebi.objects.filter(olusturan=user).order_by('-olusturma_tarihi')[:20]:
+            events.append({
+                'type': 'ticket_created',
+                'icon': 'ticket',
+                'color': 'brand',
+                'title': f'Bilet olusturuldu: {t.baslik}',
+                'detail': f'#{t.id} - {t.get_durum_display()}',
+                'date': t.olusturma_tarihi.isoformat(),
+            })
+
+        # Yorum ekleme
+        for y in TicketYorum.objects.filter(yazan=user).select_related('ticket').order_by('-olusturma_tarihi')[:20]:
+            events.append({
+                'type': 'comment_added',
+                'icon': 'message-circle',
+                'color': 'emerald',
+                'title': f'Yorum eklendi: #{y.ticket_id}',
+                'detail': y.icerik[:80],
+                'date': y.olusturma_tarihi.isoformat(),
+            })
+
+        # Zimmet hareketleri
+        for z in ZimmetLog.objects.filter(islem_yapan=user).select_related('donanim').order_by('-islem_tarihi')[:20]:
+            events.append({
+                'type': 'asset_action',
+                'icon': 'monitor',
+                'color': 'amber',
+                'title': f'{z.get_islem_turu_display()}: {z.donanim}',
+                'detail': z.aciklama[:80] if z.aciklama else '',
+                'date': z.islem_tarihi.isoformat(),
+            })
+
+        events.sort(key=lambda e: e['date'], reverse=True)
+        return Response(events[:50])

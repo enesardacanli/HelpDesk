@@ -26,3 +26,7 @@ class TicketsView(TemplateView):
 
 class LogsView(TemplateView):
     template_name = 'logs.html'
+
+
+class ActivityView(TemplateView):
+    template_name = 'activity.html'
