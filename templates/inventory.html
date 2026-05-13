@@ -11,10 +11,16 @@
             <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Envanter Yönetimi</h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Donanım listesi, zimmetleme ve durum takibi</p>
         </div>
-        <button onclick="openAddModal()" id="btn-add-device" class="hidden inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white text-sm font-semibold shadow-lg shadow-brand-500/25 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            Yeni Donanım
-        </button>
+        <div class="flex items-center gap-2">
+            <button onclick="exportCSV('inventory')" id="btn-export-inventory" class="hidden inline-flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                CSV
+            </button>
+            <button onclick="openAddModal()" id="btn-add-device" class="hidden inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white text-sm font-semibold shadow-lg shadow-brand-500/25 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Yeni Donanim
+            </button>
+        </div>
     </div>
 
     <!-- Filters -->
@@ -147,6 +153,7 @@
         currentUser = await loadUserInfo();
         if (currentUser && ['ADMIN', 'IT_UZMANI'].includes(currentUser.rol)) {
             document.getElementById('btn-add-device').classList.remove('hidden');
+            document.getElementById('btn-export-inventory').classList.remove('hidden');
         }
         loadInventory();
 
@@ -359,6 +366,20 @@
         };
         const status = device.garanti_durumu || 'Belirtilmemis';
         return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ring-1 ring-inset ${colors[status] || colors['Belirtilmemis']}">${status}</span>`;
+    }
+
+    function exportCSV(type) {
+        const token = localStorage.getItem('helpdesk_access');
+        const url = type === 'tickets' ? '/api/tickets/export/' : '/api/inventory/export/';
+        fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(r => r.blob())
+            .then(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = type === 'tickets' ? 'biletler.csv' : 'envanter.csv';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
     }
 </script>
 {% endblock %}

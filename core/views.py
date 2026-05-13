@@ -4,6 +4,9 @@ IT Destek ve Envanter Yönetim Sistemi — API ViewSet'leri.
 Tüm Use Case'leri (UC-01 ~ UC-12) karşılayan endpoint iş mantığı burada yer alır.
 """
 
+import csv
+
+from django.http import HttpResponse
 from django.db import transaction
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -45,7 +48,9 @@ from core.constants import (
     TicketDurum,
     ZimmetIslemTuru,
 )
-from core.models import Departman, DestekTalebi, Donanim, Kullanici, ZimmetLog
+from core.models import (
+    Departman, DestekTalebi, Donanim, Kullanici, TicketYorum, ZimmetLog,
+)
 from core.permissions import IsAdmin, IsITStaff
 from core.serializers import (
     DepartmanSerializer,
@@ -56,6 +61,7 @@ from core.serializers import (
     KullaniciCreateSerializer,
     KullaniciSerializer,
     TicketDurumGuncelleSerializer,
+    TicketYorumSerializer,
     ZimmetLogSerializer,
 )
 
@@ -287,6 +293,29 @@ class DonanimViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    # ------------------------------------------------------------------
+    # CSV Export
+    # ------------------------------------------------------------------
+
+    @action(detail=False, methods=['get'], url_path='export')
+    def export_csv(self, request):
+        """Envanter verilerini CSV olarak disari aktarir."""
+        if request.user.rol not in (Rol.ADMIN, Rol.IT_UZMANI):
+            return Response({'detail': 'Yetki yok.'}, status=status.HTTP_403_FORBIDDEN)
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="envanter.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['ID', 'Seri No', 'Marka', 'Model', 'Kategori', 'Durum', 'Garanti Bitis', 'Zimmetli'])
+        for d in self.get_queryset():
+            writer.writerow([
+                d.id, d.seri_no, d.marka, d.model_adi, d.kategori,
+                d.get_durum_display(),
+                d.garanti_bitis_tarihi.strftime('%d.%m.%Y') if d.garanti_bitis_tarihi else '',
+                d.zimmetli_kullanici.tam_ad if d.zimmetli_kullanici else '',
+            ])
+        return response
+
 
 # ==========================================================================
 # DESTEK TALEBİ (TICKET)
@@ -398,6 +427,48 @@ class DestekTalebiViewSet(viewsets.ModelViewSet):
             DestekTalebiSerializer(ticket).data,
             status=status.HTTP_200_OK,
         )
+
+    # ------------------------------------------------------------------
+    # Yorumlar
+    # ------------------------------------------------------------------
+
+    @action(detail=True, methods=['get', 'post'], url_path='comments')
+    def comments(self, request, pk=None):
+        """Bilete yorum listele (GET) veya yorum ekle (POST)."""
+        ticket = self.get_object()
+
+        if request.method == 'GET':
+            yorumlar = ticket.yorumlar.select_related('yazan').all()
+            serializer = TicketYorumSerializer(yorumlar, many=True)
+            return Response(serializer.data)
+
+        serializer = TicketYorumSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(ticket=ticket, yazan=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    # ------------------------------------------------------------------
+    # CSV Export
+    # ------------------------------------------------------------------
+
+    @action(detail=False, methods=['get'], url_path='export')
+    def export_csv(self, request):
+        """Tum biletleri CSV olarak disari aktarir (IT Staff only)."""
+        if request.user.rol not in (Rol.ADMIN, Rol.IT_UZMANI):
+            return Response({'detail': 'Yetki yok.'}, status=status.HTTP_403_FORBIDDEN)
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="biletler.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['ID', 'Baslik', 'Kategori', 'Aciliyet', 'Durum', 'Olusturan', 'Atanan', 'Olusturma Tarihi'])
+        for t in self.get_queryset():
+            writer.writerow([
+                t.id, t.baslik, t.get_kategori_display(), t.get_aciliyet_display(),
+                t.get_durum_display(), t.olusturan.tam_ad,
+                t.atanan_it_uzmani.tam_ad if t.atanan_it_uzmani else '',
+                t.olusturma_tarihi.strftime('%d.%m.%Y %H:%M'),
+            ])
+        return response
 
 
 # ==========================================================================

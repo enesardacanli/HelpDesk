@@ -80,3 +80,14 @@ DONANIM_DURUM_GECISLERI: dict[str, list[str]] = {
     DonanimDurum.ARIZALI: [DonanimDurum.DEPODA, DonanimDurum.HURDA],
     DonanimDurum.HURDA: [],  # Final state — geri dönüş yok
 }
+
+# ==========================================================================
+# SLA HEDEFLERİ (saat cinsinden)
+# ==========================================================================
+
+SLA_HEDEFLERI: dict[str, int] = {
+    TicketAciliyet.KRITIK: 4,
+    TicketAciliyet.YUKSEK: 8,
+    TicketAciliyet.NORMAL: 24,
+    TicketAciliyet.DUSUK: 72,
+}

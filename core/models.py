@@ -259,3 +259,33 @@ class ZimmetLog(models.Model):
     def delete(self, *args, **kwargs):
         """Silme işlemini engeller (append-only)."""
         raise ValueError('Zimmet log kayıtları silinemez.')
+
+
+# ==========================================================================
+# TICKET YORUM
+# ==========================================================================
+
+
+class TicketYorum(models.Model):
+    """Destek talebine eklenen yorumlar."""
+
+    ticket = models.ForeignKey(
+        DestekTalebi,
+        on_delete=models.CASCADE,
+        related_name='yorumlar',
+    )
+    yazan = models.ForeignKey(
+        Kullanici,
+        on_delete=models.CASCADE,
+        related_name='yorumlari',
+    )
+    icerik = models.TextField()
+    olusturma_tarihi = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Ticket Yorum'
+        verbose_name_plural = 'Ticket Yorumlar'
+        ordering = ['olusturma_tarihi']
+
+    def __str__(self):
+        return f'{self.yazan.tam_ad}: {self.icerik[:50]}'

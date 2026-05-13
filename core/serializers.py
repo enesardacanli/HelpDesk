@@ -8,10 +8,13 @@ from rest_framework import serializers
 
 from core.constants import (
     DONANIM_DURUM_GECISLERI,
+    SLA_HEDEFLERI,
     TICKET_DURUM_GECISLERI,
     DonanimDurum,
 )
-from core.models import Departman, DestekTalebi, Donanim, Kullanici, ZimmetLog
+from core.models import (
+    Departman, DestekTalebi, Donanim, Kullanici, TicketYorum, ZimmetLog,
+)
 
 
 # ==========================================================================
@@ -169,6 +172,8 @@ class DestekTalebiSerializer(serializers.ModelSerializer):
         source='get_aciliyet_display',
         read_only=True,
     )
+    sla_kalan_saat = serializers.SerializerMethodField()
+    sla_durumu = serializers.SerializerMethodField()
 
     class Meta:
         model = DestekTalebi
@@ -180,12 +185,34 @@ class DestekTalebiSerializer(serializers.ModelSerializer):
             'olusturan', 'olusturan_ad',
             'atanan_it_uzmani', 'atanan_it_uzmani_ad',
             'ilgili_donanim',
+            'sla_kalan_saat', 'sla_durumu',
             'olusturma_tarihi', 'guncelleme_tarihi',
         ]
         read_only_fields = [
             'id', 'durum', 'olusturan', 'atanan_it_uzmani',
             'olusturma_tarihi', 'guncelleme_tarihi',
         ]
+
+    def get_sla_kalan_saat(self, obj):
+        """Kalan SLA suresini saat olarak dondurur."""
+        if obj.durum in ('COZULDU', 'KAPATILDI'):
+            return None
+        from django.utils import timezone
+        hedef = SLA_HEDEFLERI.get(obj.aciliyet, 24)
+        gecen = (timezone.now() - obj.olusturma_tarihi).total_seconds() / 3600
+        return round(hedef - gecen, 1)
+
+    def get_sla_durumu(self, obj):
+        """Normal / Uyari / Ihlal."""
+        kalan = self.get_sla_kalan_saat(obj)
+        if kalan is None:
+            return None
+        if kalan <= 0:
+            return 'Ihlal'
+        hedef = SLA_HEDEFLERI.get(obj.aciliyet, 24)
+        if kalan <= hedef * 0.25:
+            return 'Uyari'
+        return 'Normal'
 
 
 class TicketDurumGuncelleSerializer(serializers.Serializer):
@@ -256,3 +283,19 @@ class ZimmetLogSerializer(serializers.ModelSerializer):
             'aciklama', 'islem_tarihi',
         ]
         read_only_fields = fields
+
+
+# ==========================================================================
+# TICKET YORUM
+# ==========================================================================
+
+
+class TicketYorumSerializer(serializers.ModelSerializer):
+    """Ticket yorum serializer'i."""
+
+    yazan_ad = serializers.CharField(source='yazan.tam_ad', read_only=True)
+
+    class Meta:
+        model = TicketYorum
+        fields = ['id', 'ticket', 'yazan', 'yazan_ad', 'icerik', 'olusturma_tarihi']
+        read_only_fields = ['id', 'ticket', 'yazan', 'olusturma_tarihi']
