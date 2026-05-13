@@ -136,7 +136,7 @@
         renderCharts(dashboardData.charts);
     }
 
-    function renderStats(totalTickets, openTickets, totalInventory, available, faulty) {
+    function renderStats(s) {
         const grid = document.getElementById('stats-grid');
         grid.innerHTML = `
             <a href="/tickets/" class="block bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in">
@@ -146,8 +146,8 @@
                         <i data-lucide="ticket" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
                     </div>
                 </div>
-                <p class="text-3xl font-extrabold text-slate-800 dark:text-white">${totalTickets}</p>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">${openTickets} açık talep</p>
+                <p class="text-3xl font-extrabold text-slate-800 dark:text-white">${s.total_tickets || 0}</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">${s.open_tickets || 0} açık talep</p>
             </a>
 
             <a href="/inventory/" class="block bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.05s">
@@ -157,8 +157,8 @@
                         <i data-lucide="monitor" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
                     </div>
                 </div>
-                <p class="text-3xl font-extrabold text-slate-800 dark:text-white">${totalInventory}</p>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">${available} depoda</p>
+                <p class="text-3xl font-extrabold text-slate-800 dark:text-white">${s.total_inventory || 0}</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">${s.available_devices || 0} depoda</p>
             </a>
 
             <a href="/tickets/" class="block bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.1s">
@@ -168,7 +168,7 @@
                         <i data-lucide="clock" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
                     </div>
                 </div>
-                <p class="text-3xl font-extrabold text-amber-600 dark:text-amber-400">${openTickets}</p>
+                <p class="text-3xl font-extrabold text-amber-600 dark:text-amber-400">${s.open_tickets || 0}</p>
                 <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">çözüm bekliyor</p>
             </a>
 
@@ -179,7 +179,7 @@
                         <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600 dark:text-red-400"></i>
                     </div>
                 </div>
-                <p class="text-3xl font-extrabold text-red-600 dark:text-red-400">${faulty}</p>
+                <p class="text-3xl font-extrabold text-red-600 dark:text-red-400">${s.faulty_devices || 0}</p>
                 <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">cihaz arızalı</p>
             </a>
         `;
