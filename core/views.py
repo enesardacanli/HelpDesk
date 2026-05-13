@@ -14,11 +14,21 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+import os
+from django.conf import settings
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from rest_framework_simplejwt.tokens import RefreshToken
+
+# Register Roboto for Turkish character support
+font_path_reg = os.path.join(settings.BASE_DIR, 'core', 'fonts', 'Roboto-Regular.ttf')
+font_path_bold = os.path.join(settings.BASE_DIR, 'core', 'fonts', 'Roboto-Bold.ttf')
+pdfmetrics.registerFont(TTFont('Roboto', font_path_reg))
+pdfmetrics.registerFont(TTFont('Roboto-Bold', font_path_bold))
 
 
 class LogoutView(APIView):
@@ -315,7 +325,9 @@ class DonanimViewSet(viewsets.ModelViewSet):
         elements = []
         
         styles = getSampleStyleSheet()
-        elements.append(Paragraph("Envanter Listesi", styles['Title']))
+        title_style = styles['Title']
+        title_style.fontName = 'Roboto-Bold'
+        elements.append(Paragraph("Envanter Listesi", title_style))
 
         data = [['ID', 'Seri No', 'Marka', 'Model', 'Kategori', 'Durum', 'Garanti Bitis', 'Zimmetli']]
         for d in self.get_queryset():
@@ -335,12 +347,12 @@ class DonanimViewSet(viewsets.ModelViewSet):
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Roboto-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 12),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
             ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 1), (-1, -1), 'Roboto'),
             ('FONTSIZE', (0, 1), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
@@ -482,26 +494,57 @@ class DestekTalebiViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     # ------------------------------------------------------------------
-    # CSV Export
+    # PDF Export
     # ------------------------------------------------------------------
 
     @action(detail=False, methods=['get'], url_path='export')
-    def export_csv(self, request):
-        """Tum biletleri CSV olarak disari aktarir (IT Staff only)."""
+    def export_pdf(self, request):
+        """Tum biletleri PDF olarak disari aktarir (IT Staff only)."""
         if request.user.rol not in (Rol.ADMIN, Rol.IT_UZMANI):
             return Response({'detail': 'Yetki yok.'}, status=status.HTTP_403_FORBIDDEN)
 
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="biletler.csv"'
-        writer = csv.writer(response)
-        writer.writerow(['ID', 'Baslik', 'Kategori', 'Aciliyet', 'Durum', 'Olusturan', 'Atanan', 'Olusturma Tarihi'])
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="biletler.pdf"'
+
+        doc = SimpleDocTemplate(response, pagesize=landscape(letter))
+        elements = []
+        
+        styles = getSampleStyleSheet()
+        title_style = styles['Title']
+        title_style.fontName = 'Roboto-Bold'
+        elements.append(Paragraph("Destek Talepleri Listesi", title_style))
+
+        data = [['ID', 'Baslik', 'Kategori', 'Aciliyet', 'Durum', 'Olusturan', 'Atanan', 'Olusturma Tarihi']]
         for t in self.get_queryset():
-            writer.writerow([
-                t.id, t.baslik, t.get_kategori_display(), t.get_aciliyet_display(),
-                t.get_durum_display(), t.olusturan.tam_ad,
-                t.atanan_it_uzmani.tam_ad if t.atanan_it_uzmani else '',
-                t.olusturma_tarihi.strftime('%d.%m.%Y %H:%M'),
+            data.append([
+                str(t.id), 
+                t.baslik[:30] + ('...' if len(t.baslik) > 30 else ''), 
+                t.get_kategori_display(), 
+                t.get_aciliyet_display(),
+                t.get_durum_display(), 
+                t.olusturan.tam_ad,
+                t.atanan_it_uzmani.tam_ad if t.atanan_it_uzmani else '-',
+                t.olusturma_tarihi.strftime('%d.%m.%Y %H:%M')
             ])
+
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Roboto-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Roboto'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        elements.append(table)
+        doc.build(elements)
+        
         return response
 
 
