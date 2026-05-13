@@ -237,6 +237,14 @@
         const gridColor = isDark ? '#334155' : '#e2e8f0';
         Chart.defaults.color = textColor;
 
+        const formatLabel = (val) => {
+            const map = {
+                'DONANIM': 'Donanım', 'YAZILIM': 'Yazılım', 'AG_ERISIMI': 'Ağ/Erişim', 'DIGER': 'Diğer',
+                'DEPODA': 'Depoda', 'KULLANIMDA': 'Kullanımda', 'ARIZALI': 'Arızalı', 'HURDA': 'Hurda'
+            };
+            return map[val] || val;
+        };
+
         // 1. 7 Gunluk Bilet Trendi (Line)
         if (charts.trend) {
             new Chart(document.getElementById('chart-trend'), {
@@ -308,7 +316,7 @@
             new Chart(document.getElementById('chart-kategori'), {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(charts.kategori),
+                    labels: Object.keys(charts.kategori).map(formatLabel),
                     datasets: [{
                         data: Object.values(charts.kategori),
                         backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e'],
@@ -332,7 +340,7 @@
             new Chart(document.getElementById('chart-inventory'), {
                 type: 'polarArea',
                 data: {
-                    labels: Object.keys(charts.inventory),
+                    labels: Object.keys(charts.inventory).map(formatLabel),
                     datasets: [{
                         data: Object.values(charts.inventory),
                         backgroundColor: [
