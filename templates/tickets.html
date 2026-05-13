@@ -132,6 +132,11 @@
     document.addEventListener('DOMContentLoaded', async () => {
         if (!requireAuth()) return;
         currentUser = await loadUserInfo();
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('durum')) document.getElementById('filter-ticket-durum').value = params.get('durum');
+        if (params.get('aciliyet')) document.getElementById('filter-ticket-aciliyet').value = params.get('aciliyet');
+
         loadTickets();
 
         if (['ADMIN', 'IT_UZMANI'].includes(currentUser?.rol)) {
@@ -151,6 +156,9 @@
         if (search) url += `&search=${encodeURIComponent(search)}`;
         if (durum) url += `&durum=${durum}`;
         if (aciliyet) url += `&aciliyet=${aciliyet}`;
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('kategori')) url += `&kategori=${params.get('kategori')}`;
 
         const resp = await api(url);
         if (!resp?.ok) return;

@@ -155,6 +155,10 @@
             document.getElementById('btn-add-device').classList.remove('hidden');
             document.getElementById('btn-export-inventory').classList.remove('hidden');
         }
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('durum')) document.getElementById('filter-durum').value = params.get('durum');
+
         loadInventory();
 
         document.getElementById('search-input').addEventListener('input', debounce(loadInventory, 300));

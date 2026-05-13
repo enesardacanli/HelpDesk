@@ -313,10 +313,11 @@
 
         // 3. Kategori Dagilimi (Doughnut)
         if (charts.kategori) {
+            const kategoriKeys = Object.keys(charts.kategori);
             new Chart(document.getElementById('chart-kategori'), {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(charts.kategori).map(formatLabel),
+                    labels: kategoriKeys.map(formatLabel),
                     datasets: [{
                         data: Object.values(charts.kategori),
                         backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e'],
@@ -328,6 +329,12 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     cutout: '70%',
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const key = kategoriKeys[elements[0].index];
+                            window.location.href = `/tickets/?kategori=${key}`;
+                        }
+                    },
                     plugins: {
                         legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } },
                     },
@@ -337,10 +344,11 @@
 
         // 4. Envanter Durumu (Polar Area)
         if (charts.inventory) {
+            const inventoryKeys = Object.keys(charts.inventory);
             new Chart(document.getElementById('chart-inventory'), {
                 type: 'polarArea',
                 data: {
-                    labels: Object.keys(charts.inventory).map(formatLabel),
+                    labels: inventoryKeys.map(formatLabel),
                     datasets: [{
                         data: Object.values(charts.inventory),
                         backgroundColor: [
@@ -358,6 +366,12 @@
                     maintainAspectRatio: false,
                     scales: {
                         r: { ticks: { display: false }, grid: { color: gridColor } }
+                    },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const key = inventoryKeys[elements[0].index];
+                            window.location.href = `/inventory/?durum=${key}`;
+                        }
                     },
                     plugins: {
                         legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } },
