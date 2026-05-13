@@ -88,6 +88,7 @@ class DonanimSerializer(serializers.ModelSerializer):
         source='get_durum_display',
         read_only=True,
     )
+    garanti_durumu = serializers.CharField(read_only=True)
 
     class Meta:
         model = Donanim
@@ -95,6 +96,7 @@ class DonanimSerializer(serializers.ModelSerializer):
             'id', 'seri_no', 'marka', 'model_adi', 'kategori',
             'durum', 'durum_display',
             'zimmetli_kullanici', 'zimmetli_kullanici_ad',
+            'garanti_bitis_tarihi', 'garanti_durumu',
             'olusturma_tarihi', 'guncelleme_tarihi',
         ]
         read_only_fields = [

@@ -115,6 +115,7 @@ class Donanim(models.Model):
         blank=True,
         related_name='donanimlar',
     )
+    garanti_bitis_tarihi = models.DateField(null=True, blank=True)
     olusturma_tarihi = models.DateTimeField(auto_now_add=True)
     guncelleme_tarihi = models.DateTimeField(auto_now=True)
 
@@ -125,6 +126,17 @@ class Donanim(models.Model):
 
     def __str__(self):
         return f'{self.marka} {self.model_adi} ({self.seri_no})'
+
+    @property
+    def garanti_durumu(self):
+        """Garantide / Garanti Bitti / Belirtilmemis."""
+        if not self.garanti_bitis_tarihi:
+            return 'Belirtilmemis'
+        from django.utils import timezone
+        today = timezone.now().date()
+        if self.garanti_bitis_tarihi >= today:
+            return 'Garantide'
+        return 'Garanti Bitti'
 
 
 # ==========================================================================

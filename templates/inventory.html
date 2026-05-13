@@ -8,8 +8,8 @@
     <!-- Page Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Envanter Yönetimi</h1>
-            <p class="text-sm text-slate-500 mt-1">Donanım listesi, zimmetleme ve durum takibi</p>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Envanter Yönetimi</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Donanım listesi, zimmetleme ve durum takibi</p>
         </div>
         <button onclick="openAddModal()" id="btn-add-device" class="hidden inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white text-sm font-semibold shadow-lg shadow-brand-500/25 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all">
             <i data-lucide="plus" class="w-4 h-4"></i>
@@ -18,13 +18,13 @@
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 mb-6">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm p-4 mb-6">
         <div class="flex flex-wrap items-center gap-3">
             <div class="relative flex-1 min-w-[200px]">
                 <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                <input type="text" id="search-input" placeholder="Seri no, marka veya model ara..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                <input type="text" id="search-input" placeholder="Seri no, marka veya model ara..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
             </div>
-            <select id="filter-durum" class="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 bg-white">
+            <select id="filter-durum" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 bg-white">
                 <option value="">Tüm Durumlar</option>
                 <option value="DEPODA">Depoda</option>
                 <option value="KULLANIMDA">Kullanımda</option>
@@ -35,22 +35,23 @@
     </div>
 
     <!-- Table -->
-    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="bg-slate-50/80 border-b border-slate-200">
+                    <tr class="bg-slate-50/80 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-600">
                         <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Seri No</th>
                         <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Marka / Model</th>
                         <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Kategori</th>
                         <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Durum</th>
+                        <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Garanti</th>
                         <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Zimmetli</th>
                         <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">İşlem</th>
                     </tr>
                 </thead>
                 <tbody id="inventory-table" class="divide-y divide-slate-100">
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                        <td colspan="7" class="px-6 py-12 text-center text-slate-400">
                             <i data-lucide="loader-2" class="w-5 h-5 mx-auto mb-2 animate-spin text-slate-300"></i>
                             Yükleniyor...
                         </td>
@@ -59,7 +60,7 @@
             </table>
         </div>
         <!-- Pagination -->
-        <div class="flex items-center justify-between px-6 py-3 border-t border-slate-100">
+        <div class="flex items-center justify-between px-6 py-3 border-t border-slate-100 dark:border-slate-700">
             <p id="inventory-info" class="text-xs text-slate-400"></p>
             <div class="flex gap-1" id="inventory-pagination"></div>
         </div>
@@ -68,7 +69,7 @@
 
 <!-- ======== ADD / EDIT MODAL ======== -->
 <div id="add-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 slide-up">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 slide-up">
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <h3 id="add-modal-title" class="text-lg font-semibold text-slate-800">Yeni Donanım Ekle</h3>
             <button onclick="closeAddModal()" class="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
@@ -95,6 +96,10 @@
                 <label class="block text-sm font-medium text-slate-700 mb-1">Kategori</label>
                 <input type="text" id="add-kategori" required placeholder="Ör: Laptop, Monitör, Yazıcı" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
             </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Garanti Bitiş Tarihi</label>
+                <input type="date" id="add-garanti" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+            </div>
             <div class="flex justify-end gap-3 pt-2">
                 <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">İptal</button>
                 <button type="submit" class="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">Kaydet</button>
@@ -105,7 +110,7 @@
 
 <!-- ======== ASSIGN MODAL ======== -->
 <div id="assign-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 slide-up">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 slide-up">
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <h3 class="text-lg font-semibold text-slate-800">Donanım Zimmetle</h3>
             <button onclick="closeAssignModal()" class="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
@@ -169,20 +174,21 @@
         const isStaff = currentUser && ['ADMIN', 'IT_UZMANI'].includes(currentUser.rol);
 
         if (!items.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">Kayıt bulunamadı.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400">Kayıt bulunamadı.</td></tr>';
             return;
         }
 
         tbody.innerHTML = items.map(d => `
-            <tr class="hover:bg-slate-50/80 transition-colors">
-                <td class="px-6 py-3.5 font-mono text-xs text-slate-600">${d.seri_no}</td>
+            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition-colors">
+                <td class="px-6 py-3.5 font-mono text-xs text-slate-600 dark:text-slate-300">${d.seri_no}</td>
                 <td class="px-6 py-3.5">
-                    <p class="font-medium text-slate-700">${d.marka}</p>
+                    <p class="font-medium text-slate-700 dark:text-slate-200">${d.marka}</p>
                     <p class="text-xs text-slate-400">${d.model_adi}</p>
                 </td>
-                <td class="px-6 py-3.5 text-slate-600">${d.kategori}</td>
+                <td class="px-6 py-3.5 text-slate-600 dark:text-slate-300">${d.kategori}</td>
                 <td class="px-6 py-3.5">${statusBadge(d.durum, 'donanim')}</td>
-                <td class="px-6 py-3.5 text-slate-600">${d.zimmetli_kullanici_ad || '<span class="text-slate-300">—</span>'}</td>
+                <td class="px-6 py-3.5">${garantiBadge(d)}</td>
+                <td class="px-6 py-3.5 text-slate-600 dark:text-slate-300">${d.zimmetli_kullanici_ad || '<span class="text-slate-300">—</span>'}</td>
                 <td class="px-6 py-3.5 text-right">
                     ${isStaff ? renderActions(d) : ''}
                 </td>
@@ -245,6 +251,8 @@
             model_adi: document.getElementById('add-model').value,
             kategori: document.getElementById('add-kategori').value,
         };
+        const garantiVal = document.getElementById('add-garanti').value;
+        if (garantiVal) body.garanti_bitis_tarihi = garantiVal;
         const editId = document.getElementById('edit-device-id').value;
         const method = editId ? 'PUT' : 'POST';
         const url = editId ? `/api/inventory/${editId}/` : '/api/inventory/';
@@ -338,6 +346,19 @@
             clearTimeout(timer);
             timer = setTimeout(() => fn.apply(this, args), delay);
         };
+    }
+
+    function garantiBadge(device) {
+        if (!device.garanti_bitis_tarihi) {
+            return '<span class="text-xs text-slate-300">\u2014</span>';
+        }
+        const colors = {
+            'Garantide': 'bg-emerald-100 text-emerald-700 ring-emerald-600/20',
+            'Garanti Bitti': 'bg-red-100 text-red-700 ring-red-600/20',
+            'Belirtilmemis': 'bg-slate-100 text-slate-500 ring-slate-500/20',
+        };
+        const status = device.garanti_durumu || 'Belirtilmemis';
+        return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ring-1 ring-inset ${colors[status] || colors['Belirtilmemis']}">${status}</span>`;
     }
 </script>
 {% endblock %}
