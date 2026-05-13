@@ -19,6 +19,7 @@ from core.frontend_views import (
     LogsView,
     TicketsView,
 )
+from core.views import LogoutView
 
 urlpatterns = [
     # Django Admin
@@ -27,6 +28,7 @@ urlpatterns = [
     # JWT Authentication
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/logout/', LogoutView.as_view(), name='logout'),
 
     # Core API
     path('api/', include('core.urls')),

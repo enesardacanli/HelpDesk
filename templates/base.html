@@ -134,10 +134,10 @@
                     Zimmet Logları
                 </a>
 
-                <div class="!mt-6 px-3">
+                <div id="nav-admin-section" class="hidden !mt-6 px-3">
                     <p class="text-[10px] uppercase tracking-widest text-slate-600 font-semibold mb-2">Yönetim</p>
                 </div>
-                <a href="/admin/" target="_blank" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium" id="nav-admin">
+                <a href="/admin/" target="_blank" class="hidden items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium nav-link" id="nav-admin">
                     <i data-lucide="shield-check" class="w-[18px] h-[18px]"></i>
                     Admin Paneli
                     <i data-lucide="external-link" class="w-3 h-3 ml-auto opacity-40"></i>
@@ -259,7 +259,20 @@
         }
 
         // ── Logout ──
-        function logout() {
+        async function logout() {
+            const refreshToken = localStorage.getItem(REFRESH_KEY);
+            if (refreshToken) {
+                try {
+                    await fetch('/api/auth/logout/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${getToken()}`,
+                        },
+                        body: JSON.stringify({ refresh: refreshToken }),
+                    });
+                } catch (_) { /* Sunucu erişilemezse de çıkış yap */ }
+            }
             clearAuth();
             window.location.href = '/login/';
         }
@@ -336,6 +349,16 @@
                 'STANDART_KULLANICI': 'Kullanıcı',
             };
             if (role) role.textContent = roleLabels[user.rol] || user.rol;
+
+            if (user.rol === 'ADMIN') {
+                const adminSec = document.getElementById('nav-admin-section');
+                const adminLink = document.getElementById('nav-admin');
+                if (adminSec) adminSec.classList.remove('hidden');
+                if (adminLink) {
+                    adminLink.classList.remove('hidden');
+                    adminLink.classList.add('flex');
+                }
+            }
         }
 
         // ── Status Badge Helper ──

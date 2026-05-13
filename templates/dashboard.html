@@ -114,7 +114,7 @@
     function renderStats(totalTickets, openTickets, totalInventory, available, faulty) {
         const grid = document.getElementById('stats-grid');
         grid.innerHTML = `
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in">
+            <a href="/tickets/" class="block bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in">
                 <div class="flex items-center justify-between mb-3">
                     <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Toplam Bilet</p>
                     <div class="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
@@ -123,9 +123,9 @@
                 </div>
                 <p class="text-3xl font-extrabold text-slate-800">${totalTickets}</p>
                 <p class="text-xs text-slate-400 mt-1">${openTickets} açık talep</p>
-            </div>
+            </a>
 
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.05s">
+            <a href="/inventory/" class="block bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.05s">
                 <div class="flex items-center justify-between mb-3">
                     <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Envanter</p>
                     <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
@@ -134,9 +134,9 @@
                 </div>
                 <p class="text-3xl font-extrabold text-slate-800">${totalInventory}</p>
                 <p class="text-xs text-slate-400 mt-1">${available} depoda</p>
-            </div>
+            </a>
 
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.1s">
+            <a href="/tickets/" class="block bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.1s">
                 <div class="flex items-center justify-between mb-3">
                     <p class="text-xs font-semibold text-amber-500 uppercase tracking-wider">Açık Talepler</p>
                     <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
@@ -145,9 +145,9 @@
                 </div>
                 <p class="text-3xl font-extrabold text-amber-600">${openTickets}</p>
                 <p class="text-xs text-slate-400 mt-1">çözüm bekliyor</p>
-            </div>
+            </a>
 
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.15s">
+            <a href="/inventory/" class="block bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 fade-in" style="animation-delay:.15s">
                 <div class="flex items-center justify-between mb-3">
                     <p class="text-xs font-semibold text-red-500 uppercase tracking-wider">Arızalı</p>
                     <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
@@ -156,7 +156,7 @@
                 </div>
                 <p class="text-3xl font-extrabold text-red-600">${faulty}</p>
                 <p class="text-xs text-slate-400 mt-1">cihaz arızalı</p>
-            </div>
+            </a>
         `;
         lucide.createIcons();
     }
