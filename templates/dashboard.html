@@ -75,18 +75,34 @@
 
     </div>
 
-    <!-- Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <!-- Charts Row 1: Trend -->
+    <div class="mt-6">
         <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm p-6 slide-up" style="animation-delay: .15s;">
+            <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">7 Günlük Bilet Trendi</h2>
+            <div class="relative h-64 flex items-center justify-center">
+                <canvas id="chart-trend"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Others -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm p-6 slide-up" style="animation-delay: .2s;">
+            <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">SLA Performansı</h2>
+            <div class="relative h-56 flex items-center justify-center">
+                <canvas id="chart-sla"></canvas>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm p-6 slide-up" style="animation-delay: .25s;">
             <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Kategori Dağılımı</h2>
             <div class="relative h-56 flex items-center justify-center">
                 <canvas id="chart-kategori"></canvas>
             </div>
         </div>
-        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm p-6 slide-up" style="animation-delay: .2s;">
-            <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Durum Dağılımı</h2>
-            <div class="relative h-56">
-                <canvas id="chart-durum"></canvas>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm p-6 slide-up" style="animation-delay: .3s;">
+            <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Envanter Durumu</h2>
+            <div class="relative h-56 flex items-center justify-center">
+                <canvas id="chart-inventory"></canvas>
             </div>
         </div>
     </div>
@@ -104,29 +120,20 @@
 
     async function loadDashboard() {
         // Fetch data in parallel
-        const [ticketsResp, inventoryResp, logsResp] = await Promise.all([
+        const [statsResp, ticketsResp, logsResp] = await Promise.all([
+            api('/api/dashboard/stats/'),
             api('/api/tickets/?page_size=5&ordering=-olusturma_tarihi'),
-            api('/api/inventory/'),
             api('/api/logs/?page_size=5&ordering=-islem_tarihi'),
         ]);
 
-        // ── Stats ──
-        const tickets = ticketsResp?.ok ? await ticketsResp.json() : { results: [], count: 0 };
-        const inventory = inventoryResp?.ok ? await inventoryResp.json() : { results: [], count: 0 };
-        const logs = logsResp?.ok ? await logsResp.json() : { results: [], count: 0 };
+        const dashboardData = statsResp?.ok ? await statsResp.json() : { stats: {}, charts: {} };
+        const tickets = ticketsResp?.ok ? await ticketsResp.json() : { results: [] };
+        const logs = logsResp?.ok ? await logsResp.json() : { results: [] };
 
-        const ticketResults = tickets.results || [];
-        const inventoryResults = inventory.results || [];
-
-        const openTickets = ticketResults.filter(t => t.durum !== 'KAPATILDI').length;
-        const totalInventory = inventory.count || 0;
-        const availableDevices = inventoryResults.filter(d => d.durum === 'DEPODA').length;
-        const faultyDevices = inventoryResults.filter(d => d.durum === 'ARIZALI').length;
-
-        renderStats(tickets.count || 0, openTickets, totalInventory, availableDevices, faultyDevices);
-        renderRecentTickets(ticketResults.slice(0, 5));
-        renderRecentLogs((logs.results || []).slice(0, 5));
-        renderCharts(ticketResults);
+        renderStats(dashboardData.stats);
+        renderRecentTickets(tickets.results || []);
+        renderRecentLogs(logs.results || []);
+        renderCharts(dashboardData.charts);
     }
 
     function renderStats(totalTickets, openTickets, totalInventory, available, faulty) {
@@ -224,62 +231,132 @@
         lucide.createIcons();
     }
 
-    function renderCharts(tickets) {
+    function renderCharts(charts) {
         const isDark = document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#94a3b8' : '#64748b';
+        const gridColor = isDark ? '#334155' : '#e2e8f0';
         Chart.defaults.color = textColor;
 
-        const kategoriCount = { DONANIM: 0, YAZILIM: 0, AG_ERISIMI: 0, DIGER: 0 };
-        const durumCount = { YENI: 0, ISLEMDE: 0, BEKLEMEDE: 0, COZULDU: 0, KAPATILDI: 0 };
-        tickets.forEach(t => {
-            if (kategoriCount.hasOwnProperty(t.kategori)) kategoriCount[t.kategori]++;
-            if (durumCount.hasOwnProperty(t.durum)) durumCount[t.durum]++;
-        });
-
-        new Chart(document.getElementById('chart-kategori'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Donanim', 'Yazilim', 'Ag/Erisim', 'Diger'],
-                datasets: [{
-                    data: Object.values(kategoriCount),
-                    backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#64748b'],
-                    borderWidth: 0,
-                    hoverOffset: 8,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '65%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyleWidth: 8 } },
+        // 1. 7 Gunluk Bilet Trendi (Line)
+        if (charts.trend) {
+            new Chart(document.getElementById('chart-trend'), {
+                type: 'line',
+                data: {
+                    labels: charts.trend.labels,
+                    datasets: [
+                        {
+                            label: 'Acilan',
+                            data: charts.trend.opened,
+                            borderColor: '#38bdf8',
+                            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Kapatilan',
+                            data: charts.trend.closed,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
                 },
-            },
-        });
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { color: gridColor }, beginAtZero: true, ticks: { stepSize: 1 } }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                }
+            });
+        }
 
-        new Chart(document.getElementById('chart-durum'), {
-            type: 'bar',
-            data: {
-                labels: ['Yeni', 'Islemde', 'Beklemede', 'Cozuldu', 'Kapatildi'],
-                datasets: [{
-                    label: 'Bilet Sayisi',
-                    data: Object.values(durumCount),
-                    backgroundColor: ['#38bdf8', '#fbbf24', '#94a3b8', '#34d399', '#cbd5e1'],
-                    borderRadius: 8,
-                    barThickness: 28,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                scales: {
-                    x: { grid: { display: false }, ticks: { stepSize: 1 } },
-                    y: { grid: { display: false } },
+        // 2. SLA Performansi (Doughnut)
+        if (charts.sla) {
+            new Chart(document.getElementById('chart-sla'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Zamaninda', 'Riskli', 'Ihlal'],
+                    datasets: [{
+                        data: [charts.sla.normal || 0, charts.sla.warning || 0, charts.sla.violation || 0],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0,
+                        hoverOffset: 8,
+                    }],
                 },
-                plugins: { legend: { display: false } },
-            },
-        });
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyleWidth: 8 } },
+                    },
+                },
+            });
+        }
+
+        // 3. Kategori Dagilimi (Doughnut)
+        if (charts.kategori) {
+            new Chart(document.getElementById('chart-kategori'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(charts.kategori),
+                    datasets: [{
+                        data: Object.values(charts.kategori),
+                        backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e'],
+                        borderWidth: 0,
+                        hoverOffset: 8,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyleWidth: 8 } },
+                    },
+                },
+            });
+        }
+
+        // 4. Envanter Durumu (Polar Area)
+        if (charts.inventory) {
+            new Chart(document.getElementById('chart-inventory'), {
+                type: 'polarArea',
+                data: {
+                    labels: Object.keys(charts.inventory),
+                    datasets: [{
+                        data: Object.values(charts.inventory),
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.7)', // DEPODA
+                            'rgba(99, 102, 241, 0.7)', // KULLANIMDA
+                            'rgba(239, 68, 68, 0.7)',  // ARIZALI
+                            'rgba(100, 116, 139, 0.7)' // HURDA
+                        ],
+                        borderWidth: 1,
+                        borderColor: isDark ? '#1e293b' : '#ffffff'
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: { ticks: { display: false }, grid: { color: gridColor } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyleWidth: 8 } },
+                    },
+                },
+            });
+        }
     }
 </script>
 {% endblock %}

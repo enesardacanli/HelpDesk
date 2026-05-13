@@ -8,6 +8,10 @@ import csv
 
 from django.http import HttpResponse
 from django.db import transaction
+from django.db.models import Count, Q
+from django.db.models.functions import TruncDate
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -641,3 +645,109 @@ class ActivityTimelineView(viewsets.ViewSet):
 
         events.sort(key=lambda e: e['date'], reverse=True)
         return Response(events[:50])
+
+
+# ==========================================================================
+# DASHBOARD STATS
+# ==========================================================================
+
+
+class DashboardStatsView(APIView):
+    """Dashboard icin analitik verileri, SLA metriklerini ve trendleri dondurur."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        now = timezone.now()
+        seven_days_ago = now - timedelta(days=7)
+
+        # Temel İstatistikler
+        total_tickets = DestekTalebi.objects.count()
+        open_tickets = DestekTalebi.objects.exclude(durum=TicketDurum.KAPATILDI).count()
+        total_inventory = Donanim.objects.count()
+        faulty_devices = Donanim.objects.filter(durum=DonanimDurum.ARIZALI).count()
+        available_devices = Donanim.objects.filter(durum=DonanimDurum.DEPODA).count()
+
+        # Envanter Durum Dağılımı
+        inventory_stats = dict(
+            Donanim.objects.values('durum').annotate(count=Count('id')).values_list('durum', 'count')
+        )
+
+        # Kategori Dağılımı
+        kategori_stats = dict(
+            DestekTalebi.objects.values('kategori').annotate(count=Count('id')).values_list('kategori', 'count')
+        )
+
+        # 7 Günlük Trend (Açılan vs Kapatılan)
+        # Sadece son 7 gündeki biletler
+        opened_qs = DestekTalebi.objects.filter(olusturma_tarihi__gte=seven_days_ago) \
+            .annotate(date=TruncDate('olusturma_tarihi')) \
+            .values('date').annotate(count=Count('id')).order_by('date')
+            
+        closed_qs = DestekTalebi.objects.filter(guncelleme_tarihi__gte=seven_days_ago, durum=TicketDurum.KAPATILDI) \
+            .annotate(date=TruncDate('guncelleme_tarihi')) \
+            .values('date').annotate(count=Count('id')).order_by('date')
+
+        trend_dict = {}
+        for i in range(7):
+            d = (seven_days_ago + timedelta(days=i)).date()
+            trend_dict[d.isoformat()] = {'opened': 0, 'closed': 0}
+
+        for item in opened_qs:
+            d_str = item['date'].isoformat()
+            if d_str in trend_dict:
+                trend_dict[d_str]['opened'] = item['count']
+
+        for item in closed_qs:
+            d_str = item['date'].isoformat()
+            if d_str in trend_dict:
+                trend_dict[d_str]['closed'] = item['count']
+
+        trend_labels = []
+        trend_opened = []
+        trend_closed = []
+        
+        # Turkce gun isimleri icin manuel haritalama (Locale bagimsiz)
+        tr_days = ['Pzt', 'Sal', 'Car', 'Per', 'Cum', 'Cmt', 'Paz']
+        
+        for k in sorted(trend_dict.keys()):
+            date_obj = timezone.datetime.fromisoformat(k).date()
+            trend_labels.append(tr_days[date_obj.weekday()])
+            trend_opened.append(trend_dict[k]['opened'])
+            trend_closed.append(trend_dict[k]['closed'])
+
+        # SLA Performansı (Computed field oldugu icin DB seviyesinde query atamiyoruz)
+        # Tum acik ve yeni kapanmis biletleri bellekte analiz edecegiz (Performans icin son 1 ay diyebiliriz)
+        one_month_ago = now - timedelta(days=30)
+        recent_tickets = DestekTalebi.objects.filter(olusturma_tarihi__gte=one_month_ago)
+        
+        sla_stats = {'normal': 0, 'warning': 0, 'violation': 0}
+        from core.serializers import DestekTalebiSerializer
+        # Biletlerin SLA durumunu computed olarak hesapla
+        for t in recent_tickets:
+            # Serializer method'unu dogrudan cagirarak yeniden kullanim
+            serializer = DestekTalebiSerializer()
+            serializer.context = {} # Context gereksinimi yok
+            durum = serializer.get_sla_durumu(t)
+            if durum in sla_stats:
+                sla_stats[durum] += 1
+
+        return Response({
+            'stats': {
+                'total_tickets': total_tickets,
+                'open_tickets': open_tickets,
+                'total_inventory': total_inventory,
+                'faulty_devices': faulty_devices,
+                'available_devices': available_devices
+            },
+            'charts': {
+                'trend': {
+                    'labels': trend_labels,
+                    'opened': trend_opened,
+                    'closed': trend_closed
+                },
+                'sla': sla_stats,
+                'kategori': kategori_stats,
+                'inventory': inventory_stats
+            }
+        })

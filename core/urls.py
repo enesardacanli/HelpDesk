@@ -9,6 +9,7 @@ from rest_framework.routers import DefaultRouter
 
 from core.views import (
     ActivityTimelineView,
+    DashboardStatsView,
     DepartmanViewSet,
     DestekTalebiViewSet,
     DonanimViewSet,
@@ -25,5 +26,6 @@ router.register(r'logs', ZimmetLogViewSet, basename='zimmet-log')
 router.register(r'activity', ActivityTimelineView, basename='activity')
 
 urlpatterns = [
+    path('dashboard/stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
     path('', include(router.urls)),
 ]
